@@ -1,0 +1,81 @@
+:root {
+  --bg-1: #121a12;
+  --bg-2: #0b120c;
+  --card: rgba(12, 20, 12, 0.78);
+  --card-strong: rgba(12, 20, 12, 0.95);
+  --card-border: rgba(122, 143, 116, 0.35);
+  --text: #e6ede4;
+  --muted: #a3b1a0;
+  --accent: #8fb36a;
+  --accent-2: #d4b56a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body.app-body {
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(900px 700px at 15% 10%, #1c251a 0%, transparent 55%),
+    radial-gradient(1000px 800px at 90% 10%, #3f5a36 0%, transparent 45%),
+    linear-gradient(160deg, var(--bg-1), var(--bg-2));
+}
+
+.app-shell {
+  color: var(--text);
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(12px);
+}
+
+.panel-strong {
+  background: var(--card-strong);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(12px);
+}
+
+.muted-text {
+  color: var(--muted);
+}
+
+.accent-chip {
+  border-color: rgba(143, 179, 106, 0.6);
+  color: #0c140c;
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+}
+
+/* Custom scrollbar for log window */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(12, 20, 12, 0.7);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(143, 179, 106, 0.35);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(143, 179, 106, 0.6);
+}
+
+/* Map container override */
+.mapboxgl-canvas {
+  background: #0b120c;
+}

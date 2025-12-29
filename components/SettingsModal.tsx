@@ -45,27 +45,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="space-y-1">
-            <label className="text-[10px] uppercase font-bold text-[color:var(--muted)]">API Endpoint URL</label>
-            <input 
-              type="text" 
-              required
-              value={formData.apiUrl}
-              onChange={e => setFormData({...formData, apiUrl: e.target.value})}
-              className="w-full bg-transparent border border-[color:var(--card-border)] rounded px-3 py-2 text-xs font-mono text-[color:var(--accent)] focus:outline-none focus:border-[color:var(--accent)] transition-colors"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] uppercase font-bold text-[color:var(--muted)]">Authentication Token (X-User-Token)</label>
-            <input 
-              type="text" 
-              required
-              value={formData.userToken}
-              onChange={e => setFormData({...formData, userToken: e.target.value})}
-              className="w-full bg-transparent border border-[color:var(--card-border)] rounded px-3 py-2 text-xs font-mono text-[color:var(--accent)] focus:outline-none focus:border-[color:var(--accent)] transition-colors"
-            />
-          </div>
 
           <div className="space-y-1">
             <label className="text-[10px] uppercase font-bold text-[color:var(--muted)]">Project UUID</label>

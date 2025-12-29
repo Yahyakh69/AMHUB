@@ -30,11 +30,9 @@ export enum ConnectionStatus {
 }
 
 export interface AppSettings {
-  userToken: string;
   projectUuid: string;
   workflowUuid: string;
   creatorId: string;
-  apiUrl: string;
 }
 
 // --- Topology / Device Types ---

@@ -1,9 +1,11 @@
+'use client';
+
 import React, { useState, useCallback, useEffect } from 'react';
-import { sendWorkflowAlert, getProjectTopology, getLiveSnapshot, connectLiveTelemetry } from './services/apiService';
+import { sendWorkflowAlert, getProjectTopology } from './services/apiService';
 import { WorkflowRequest, LogEntry, ConnectionStatus, AppSettings, Device } from './types';
 import { 
   WORKFLOW_UUID, CREATOR_ID, DEFAULT_LAT, DEFAULT_LNG, 
-  DEFAULT_LEVEL, DEFAULT_DESC, USER_TOKEN, PROJECT_UUID, API_URL 
+  DEFAULT_LEVEL, DEFAULT_DESC, PROJECT_UUID 
 } from './constants';
 import { StatusBadge } from './components/StatusBadge';
 import { ConsoleLog } from './components/ConsoleLog';
@@ -23,11 +25,9 @@ const App: React.FC = () => {
   
   // Settings State
   const [appSettings, setAppSettings] = useState<AppSettings>({
-    userToken: USER_TOKEN,
     projectUuid: PROJECT_UUID,
     workflowUuid: WORKFLOW_UUID,
-    creatorId: CREATOR_ID,
-    apiUrl: API_URL
+    creatorId: CREATOR_ID
   });
 
   // Local state for editable fields
@@ -36,6 +36,34 @@ const App: React.FC = () => {
   const [desc, setDesc] = useState(DEFAULT_DESC);
   const [level, setLevel] = useState(DEFAULT_LEVEL);
   const [requesterName, setRequesterName] = useState("");
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadConfig = async () => {
+      try {
+        const res = await fetch('/api/config');
+        if (!res.ok) return;
+        const cfg = await res.json();
+        const next = cfg?.app_settings;
+        if (!isActive || !next) return;
+
+        setAppSettings((prev) => ({
+          projectUuid: next.projectUuid || prev.projectUuid,
+          workflowUuid: next.workflowUuid || prev.workflowUuid,
+          creatorId: next.creatorId || prev.creatorId
+        }));
+      } catch {
+        // Config is optional; defaults or user settings apply.
+      }
+    };
+
+    loadConfig();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const addLog = useCallback((type: LogEntry['type'], message: string, details?: unknown) => {
     const newLog: LogEntry = {
@@ -52,6 +80,10 @@ const App: React.FC = () => {
   const fetchDevices = useCallback(async () => {
     setIsLoadingDevices(true);
     try {
+      if (!appSettings.projectUuid) {
+        addLog('error', 'Missing API configuration. Open settings to configure credentials.');
+        return;
+      }
       const response = await getProjectTopology(appSettings);
       if (response && response.data) {
         setDevices(response.data);
@@ -75,57 +107,24 @@ const App: React.FC = () => {
     }
   }, [appSettings, addLog]);
 
-  const mergeDevices = useCallback((incoming: Device[]) => {
-    setDevices(prev => {
-      if (prev.length === 0) return incoming;
-      const map = new Map(prev.map(d => [d.device_sn, d]));
-      incoming.forEach(d => map.set(d.device_sn, d));
-      return Array.from(map.values());
-    });
-  }, []);
-
-  // Live Telemetry (WebSocket)
+  // Poll topology (server-side proxy) for Vercel compatibility
   useEffect(() => {
-    addLog('info', 'Connecting live telemetry (WebSocket)...');
-    const connection = connectLiveTelemetry({
-      onDevices: (nextDevices, type) => {
-        if (type === 'snapshot') {
-          setDevices(nextDevices);
-          addLog('info', `Live Snapshot: ${nextDevices.length} devices.`);
-        } else {
-          mergeDevices(nextDevices);
-        }
-      },
-      onStatus: (status, detail) => {
-        addLog('info', `Live WS ${status}${detail ? `: ${detail}` : ''}`);
-      },
-      onError: (error) => {
-        addLog('error', 'Live WS error', { error: String(error) });
-      }
-    });
+    let isMounted = true;
+    let intervalId: number | undefined;
+
+    const load = async () => {
+      if (!isMounted) return;
+      await fetchDevices();
+    };
+
+    load();
+    intervalId = window.setInterval(load, 6000);
 
     return () => {
-      connection.close();
+      isMounted = false;
+      if (intervalId) window.clearInterval(intervalId);
     };
-  }, [addLog, mergeDevices]);
-
-  // Initial Snapshot for quick load
-  useEffect(() => {
-    setIsLoadingDevices(true);
-    getLiveSnapshot()
-      .then((liveDevices) => {
-        if (liveDevices.length > 0) {
-          setDevices(liveDevices);
-          addLog('info', `Live Snapshot: ${liveDevices.length} devices.`);
-        } else {
-          fetchDevices();
-        }
-      })
-      .catch(() => {
-        fetchDevices();
-      })
-      .finally(() => setIsLoadingDevices(false));
-  }, [addLog, fetchDevices]);
+  }, [fetchDevices]);
 
   const handleLocationSelect = (lat: number, lng: number) => {
     setLatitude(lat);
@@ -138,6 +137,10 @@ const App: React.FC = () => {
 
   const handleTrigger = async () => {
     if (status === ConnectionStatus.SENDING) return;
+    if (!appSettings.projectUuid || !appSettings.workflowUuid || !appSettings.creatorId) {
+      addLog('error', 'Missing workflow configuration. Open settings to configure credentials.');
+      return;
+    }
 
     setStatus(ConnectionStatus.SENDING);
     

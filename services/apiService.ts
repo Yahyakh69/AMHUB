@@ -1,7 +1,10 @@
 import { WorkflowRequest, AppSettings, TopologyResponse, Device, DeviceTelemetry, BackendDock, BackendDrone } from '../types';
 
-const PROXY_BASE = "https://corsproxy.io/?";
+const LIVE_HTTP_BASE = process.env.NEXT_PUBLIC_LIVE_HTTP_BASE;
+const LIVE_WS_URL = process.env.NEXT_PUBLIC_LIVE_WS_URL;
+
 const buildLiveHttpBase = (): string => {
+  if (LIVE_HTTP_BASE) return LIVE_HTTP_BASE;
   if (typeof window !== 'undefined' && window.location?.origin) {
     return window.location.origin;
   }
@@ -9,6 +12,7 @@ const buildLiveHttpBase = (): string => {
 };
 
 const buildLiveWsUrl = (): string => {
+  if (LIVE_WS_URL) return LIVE_WS_URL;
   if (typeof window !== 'undefined' && window.location?.host) {
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
     return `${proto}://${window.location.host}/ws/telemetry`;
@@ -170,16 +174,15 @@ const extractFlightHubTopologyDevices = (rawData: any): { dock?: any; drone?: an
 
 export const sendWorkflowAlert = async (payload: WorkflowRequest, settings: AppSettings): Promise<any> => {
   try {
-    const targetUrl = PROXY_BASE + encodeURIComponent(settings.apiUrl);
-
-    const response = await fetch(targetUrl, {
+    const response = await fetch('/api/workflow', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-User-Token': settings.userToken,
-        'x-project-uuid': settings.projectUuid
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        projectUuid: settings.projectUuid,
+        payload
+      })
     });
 
     let responseData;
@@ -215,17 +218,13 @@ export const getLiveSnapshot = async (): Promise<Device[]> => {
 };
 
 export const getDeviceOsd = async (deviceSn: string, settings: AppSettings): Promise<any> => {
-  const urlObj = new URL(settings.apiUrl);
-  const domain = urlObj.origin;
-  const osdPath = `${domain}/manage/api/v1.0/devices/${encodeURIComponent(deviceSn)}/osd`;
-  const targetUrl = PROXY_BASE + encodeURIComponent(osdPath);
-
-  const response = await fetch(targetUrl, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-Token': settings.userToken,
-      'x-project-uuid': settings.projectUuid
+  const response = await fetch(
+    `/api/osd?deviceSn=${encodeURIComponent(deviceSn)}&projectUuid=${encodeURIComponent(settings.projectUuid)}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
     }
   });
 
@@ -331,19 +330,14 @@ const isGenericId = (name: string): boolean => {
 
 export const getProjectTopology = async (settings: AppSettings): Promise<TopologyResponse> => {
   try {
-    const urlObj = new URL(settings.apiUrl);
-    const domain = urlObj.origin; 
-    const topologyPath = `${domain}/manage/api/v1.0/projects/${settings.projectUuid}/topologies`;
-    const targetUrl = PROXY_BASE + encodeURIComponent(topologyPath);
+    const targetUrl = `/api/topology?projectUuid=${encodeURIComponent(settings.projectUuid)}`;
 
-    console.log("Fetching Topology:", topologyPath);
+    console.log("Fetching Topology:", targetUrl);
 
     const response = await fetch(targetUrl, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
-        'X-User-Token': settings.userToken,
-        'x-project-uuid': settings.projectUuid
+        'Content-Type': 'application/json'
       }
     });
 
