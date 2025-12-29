@@ -12,6 +12,19 @@ dist
 dist-ssr
 *.local
 
+# Env and secrets
+.env
+.env.*
+Secret/secrets.json
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Coverage and build artifacts
+coverage/
+.vite/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -22,3 +35,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+Secret/secrets.json
+
+
