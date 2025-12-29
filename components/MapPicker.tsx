@@ -12,7 +12,7 @@ interface MapPickerProps {
   onMapInteract?: () => void;
 }
 
-const MAPBOX_TOKEN = "pk.eyJ1IjoiYmlsYWxhbXQiLCJhIjoiY21qcHdmNjd1M2ljMTNncXh4OG10bjM1ZSJ9.DdrBIWn_ukTldrDk0_7oWg";
+const MAPBOX_TOKEN = "";
 const MAPBOX_STYLE = "mapbox://styles/mapbox/streets-v12";
 const MAPBOX_STYLE_SAT = "mapbox://styles/mapbox/satellite-streets-v12";
 
@@ -112,6 +112,11 @@ export const MapPicker: React.FC<MapPickerProps> = ({
       }
 
       if (!isActive || !mapContainerRef.current) return;
+
+      if (!token) {
+        console.warn("Mapbox token missing. Set MAPBOX_PUBLIC_TOKEN to enable maps.");
+        return;
+      }
 
       mapboxgl.accessToken = token;
       const map = new mapboxgl.Map({

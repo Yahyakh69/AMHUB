@@ -37,6 +37,36 @@ const App: React.FC = () => {
   const [level, setLevel] = useState(DEFAULT_LEVEL);
   const [requesterName, setRequesterName] = useState("");
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadConfig = async () => {
+      try {
+        const res = await fetch('/api/config');
+        if (!res.ok) return;
+        const cfg = await res.json();
+        const next = cfg?.app_settings;
+        if (!isActive || !next) return;
+
+        setAppSettings((prev) => ({
+          apiUrl: next.apiUrl || prev.apiUrl,
+          userToken: next.userToken || prev.userToken,
+          projectUuid: next.projectUuid || prev.projectUuid,
+          workflowUuid: next.workflowUuid || prev.workflowUuid,
+          creatorId: next.creatorId || prev.creatorId
+        }));
+      } catch {
+        // Config is optional; defaults or user settings apply.
+      }
+    };
+
+    loadConfig();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
   const addLog = useCallback((type: LogEntry['type'], message: string, details?: unknown) => {
     const newLog: LogEntry = {
       id: Math.random().toString(36).substring(7),
@@ -52,6 +82,10 @@ const App: React.FC = () => {
   const fetchDevices = useCallback(async () => {
     setIsLoadingDevices(true);
     try {
+      if (!appSettings.apiUrl || !appSettings.userToken || !appSettings.projectUuid) {
+        addLog('error', 'Missing API configuration. Open settings to configure credentials.');
+        return;
+      }
       const response = await getProjectTopology(appSettings);
       if (response && response.data) {
         setDevices(response.data);
@@ -138,6 +172,10 @@ const App: React.FC = () => {
 
   const handleTrigger = async () => {
     if (status === ConnectionStatus.SENDING) return;
+    if (!appSettings.apiUrl || !appSettings.userToken || !appSettings.projectUuid || !appSettings.workflowUuid || !appSettings.creatorId) {
+      addLog('error', 'Missing workflow configuration. Open settings to configure credentials.');
+      return;
+    }
 
     setStatus(ConnectionStatus.SENDING);
     

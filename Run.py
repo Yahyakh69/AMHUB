@@ -35,6 +35,14 @@ DJI_BASE_URL = os.getenv(
     "DJI_BASE_URL",
     SECRETS.get("DJI_BASE_URL", "https://es-flight-api-us.djigate.com"),
 ).rstrip("/")
+DJI_API_URL = os.getenv(
+    "DJI_API_URL",
+    SECRETS.get("DJI_API_URL", "https://es-flight-api-us.djigate.com/openapi/v0.1/workflow"),
+)
+DJI_USER_TOKEN = os.getenv(
+    "DJI_USER_TOKEN",
+    SECRETS.get("DJI_USER_TOKEN", SECRETS.get("DJI_ORG_KEY", "")),
+)
 ORG_KEY = os.getenv(
     "DJI_ORG_KEY",
     SECRETS.get(
@@ -46,6 +54,14 @@ PROJECT_UUID = os.getenv(
     "DJI_PROJECT_UUID",
     SECRETS.get("DJI_PROJECT_UUID", "4149cc35-4491-4249-a050-d0a7f336fa45"),
 )  # pick one project to show live
+WORKFLOW_UUID = os.getenv(
+    "DJI_WORKFLOW_UUID",
+    SECRETS.get("DJI_WORKFLOW_UUID", ""),
+)
+CREATOR_ID = os.getenv(
+    "DJI_CREATOR_ID",
+    SECRETS.get("DJI_CREATOR_ID", ""),
+)
 MAPBOX_PUBLIC_TOKEN = os.getenv("MAPBOX_PUBLIC_TOKEN", SECRETS.get("MAPBOX_PUBLIC_TOKEN", ""))
 POLL_SECONDS = float(os.getenv("POLL_SECONDS", "2.0"))
 
@@ -239,7 +255,16 @@ async def api_state() -> JSONResponse:
 
 @app.get("/api/config")
 async def api_config() -> Dict[str, Any]:
-    return {"mapbox_public_token": MAPBOX_PUBLIC_TOKEN}
+    return {
+        "mapbox_public_token": MAPBOX_PUBLIC_TOKEN,
+        "app_settings": {
+            "apiUrl": DJI_API_URL,
+            "userToken": DJI_USER_TOKEN,
+            "projectUuid": PROJECT_UUID,
+            "workflowUuid": WORKFLOW_UUID,
+            "creatorId": CREATOR_ID,
+        },
+    }
 
 @app.get("/api/stream")
 async def api_stream(sn: str = Query(...)) -> Dict[str, Optional[str]]:
