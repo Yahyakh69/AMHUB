@@ -1,24 +1,19 @@
 import { WorkflowRequest, AppSettings, TopologyResponse, Device, DeviceTelemetry, BackendDock, BackendDrone } from '../types';
 
 const PROXY_BASE = "https://corsproxy.io/?";
-const LIVE_BACKEND_PORT = 8000;
-
-const resolveLiveHost = (): string => {
-  if (typeof window !== 'undefined' && window.location?.hostname) {
-    return window.location.hostname || 'localhost';
-  }
-  return 'localhost';
-};
-
 const buildLiveHttpBase = (): string => {
-  const host = resolveLiveHost();
-  return `http://${host}:${LIVE_BACKEND_PORT}`;
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  return 'http://localhost:8000';
 };
 
 const buildLiveWsUrl = (): string => {
-  const host = resolveLiveHost();
-  const proto = (typeof window !== 'undefined' && window.location?.protocol === 'https:') ? 'wss' : 'ws';
-  return `${proto}://${host}:${LIVE_BACKEND_PORT}/ws/telemetry`;
+  if (typeof window !== 'undefined' && window.location?.host) {
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    return `${proto}://${window.location.host}/ws/telemetry`;
+  }
+  return 'ws://localhost:8000/ws/telemetry';
 };
 
 interface LiveTelemetryDevice {
@@ -209,8 +204,7 @@ export const sendWorkflowAlert = async (payload: WorkflowRequest, settings: AppS
 };
 
 export const getLiveSnapshot = async (): Promise<Device[]> => {
-  const targetUrl = `${buildLiveHttpBase()}/api/state`;
-  const response = await fetch(targetUrl, { method: 'GET' });
+  const response = await fetch(`${buildLiveHttpBase()}/api/state`, { method: 'GET' });
   if (!response.ok) {
     const errText = await response.text().catch(() => response.statusText);
     throw new Error(`Live snapshot error: ${response.status} - ${errText.substring(0, 100)}`);
