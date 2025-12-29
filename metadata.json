@@ -1,0 +1,5 @@
+{
+  "name": "V4 of DJI FlightHub Workflow Trigger",
+  "description": "A mission-control dashboard to trigger workflow alerts via the DJI FlightHub 2 API.",
+  "requestFramePermissions": []
+}
