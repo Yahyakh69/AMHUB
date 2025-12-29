@@ -218,14 +218,10 @@ export const getLiveSnapshot = async (): Promise<Device[]> => {
 };
 
 export const getDeviceOsd = async (deviceSn: string, settings: AppSettings): Promise<any> => {
-  const response = await fetch(
-    `/api/osd?deviceSn=${encodeURIComponent(deviceSn)}&projectUuid=${encodeURIComponent(settings.projectUuid)}`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }
+  const query = `deviceSn=${encodeURIComponent(deviceSn)}&projectUuid=${encodeURIComponent(settings.projectUuid)}`;
+  const response = await fetch(`/api/osd?${query}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
   });
 
   if (!response.ok) {
